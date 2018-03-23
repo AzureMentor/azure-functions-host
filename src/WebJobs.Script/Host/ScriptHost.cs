@@ -1057,7 +1057,7 @@ namespace Microsoft.Azure.WebJobs.Script
 
             foreach (var scriptDir in functionDirectories)
             {
-                var function = ReadFunctionMetadata(scriptDir, logger, functionErrors, settingsManager, functionWhitelist);
+                var function = ReadFunctionMetadata(scriptDir, functionErrors, settingsManager, functionWhitelist);
                 if (function != null)
                 {
                     functions.Add(function);
@@ -1067,7 +1067,7 @@ namespace Microsoft.Azure.WebJobs.Script
             return functions;
         }
 
-        public static FunctionMetadata ReadFunctionMetadata(string scriptDir, ILogger logger, Dictionary<string, Collection<string>> functionErrors, ScriptSettingsManager settingsManager = null, IEnumerable<string> functionWhitelist = null)
+        public static FunctionMetadata ReadFunctionMetadata(string scriptDir, Dictionary<string, Collection<string>> functionErrors, ScriptSettingsManager settingsManager = null, IEnumerable<string> functionWhitelist = null)
         {
             string functionName = null;
 
@@ -1078,7 +1078,8 @@ namespace Microsoft.Azure.WebJobs.Script
                 string json = null;
                 try
                 {
-                    json = File.ReadAllText(functionConfigPath);
+                    // This should be async
+                    json = FileUtility.ReadAllText(functionConfigPath);
                 }
                 catch (FileNotFoundException)
                 {
@@ -1101,7 +1102,7 @@ namespace Microsoft.Azure.WebJobs.Script
 
                 string functionError = null;
                 FunctionMetadata functionMetadata = null;
-                if (!TryParseFunctionMetadata(functionName, functionConfig, logger, scriptDir, settingsManager, out functionMetadata, out functionError))
+                if (!TryParseFunctionMetadata(functionName, functionConfig, scriptDir, settingsManager, out functionMetadata, out functionError))
                 {
                     // for functions in error, log the error and don't
                     // add to the functions collection
@@ -1209,7 +1210,7 @@ namespace Microsoft.Azure.WebJobs.Script
             return proxies;
         }
 
-        internal static bool TryParseFunctionMetadata(string functionName, JObject functionConfig, ILogger logger, string scriptDirectory,
+        internal static bool TryParseFunctionMetadata(string functionName, JObject functionConfig, string scriptDirectory,
                 ScriptSettingsManager settingsManager, out FunctionMetadata functionMetadata, out string error, IFileSystem fileSystem = null)
         {
             fileSystem = fileSystem ?? new FileSystem();
